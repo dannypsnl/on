@@ -15,11 +15,10 @@ func main() {
 		suggests: make([]prompt.Suggest, 0),
 		contexts: os.Args[1:],
 	}
-	LivePrefix = prettyContext(h.contexts)
 	p := prompt.New(
 		h.executor,
 		h.completer,
-		prompt.OptionLivePrefix(changeLivePrefix),
+		prompt.OptionLivePrefix(h.livePrefix),
 		prompt.OptionAddKeyBind(
 			prompt.KeyBind{
 				Key: prompt.ControlA,
@@ -67,13 +66,11 @@ func (h *History) executor(t string) {
 	}
 	fmt.Println(string(res))
 
-	LivePrefix = prettyContext(h.contexts)
 	h.Add(t)
 }
 
 func (h *History) updateContext(newCtxs []string) {
 	h.contexts = append(h.contexts, newCtxs...)
-	LivePrefix = prettyContext(h.contexts)
 }
 
 func prettyContext(ctxs []string) string {
@@ -86,8 +83,6 @@ func prettyContext(ctxs []string) string {
 	return s[:len(s)-1]
 }
 
-var LivePrefix string
-
-func changeLivePrefix() (string, bool) {
-	return fmt.Sprintf("on(%s)> ", LivePrefix), true
+func (h *History) livePrefix() (string, bool) {
+	return fmt.Sprintf("on(%s)> ", prettyContext(h.contexts)), true
 }
