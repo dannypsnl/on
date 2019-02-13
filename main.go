@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -64,7 +63,7 @@ func (h *History) executor(t string) {
 	cmd := exec.Command(h.contexts[0], append(h.contexts[1:], restCmd...)...)
 	res, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Fatalf("error: %s", err)
+		fmt.Printf("error: %s\n", err)
 	}
 	fmt.Println(string(res))
 
