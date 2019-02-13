@@ -26,4 +26,15 @@ kubernetes   ClusterIP   10.0.0.1       <none>        443/TCP   12d
 world-svc    ClusterIP   10.0.106.133   <none>        80/TCP    28h
 ```
 
+### Key Binds
+
+- `<C-a>`: control + A, type this then write done new contexts and `<Enter>`, you would see the context be apply on to old context
+
+    For example:
+	```
+	on(kubectl)>
+	# <C-a>get<Enter>
+	on(kubectl get)>
+	```
+
 At here you can see we avoid typing `kubectl` again and again
