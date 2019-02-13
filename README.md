@@ -4,9 +4,8 @@ This is a command line tool helps you avoid keep typing the same prefix when you
 
 For example:
 ```
-My Terminal)> on kubectl
-on(kubectl)
-$ get po
+$ on kubectl
+on(kubectl)> get po
 NAME                                READY   STATUS    RESTARTS   AGE
 alpine-deploy-7b496f9bb-rdt6q       1/1     Running   2          28h
 alpine-deploy-7b496f9bb-stcqj       1/1     Running   2          28h
@@ -20,8 +19,7 @@ world-deployment-6886f8cf9f-c4wlm   1/1     Running   0          28h
 world-deployment-6886f8cf9f-dz4j5   1/1     Running   0          28h
 world-deployment-6886f8cf9f-zvfx9   1/1     Running   0          28h
 
-on(kubectl)
-$ get svc
+on(kubectl)> get svc
 NAME         TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
 hello-svc    ClusterIP   10.0.154.37    <none>        80/TCP    28h
 kubernetes   ClusterIP   10.0.0.1       <none>        443/TCP   12d
