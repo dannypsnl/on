@@ -63,10 +63,10 @@ func (h *History) executor(t string) {
 	res, err := cmd.CombinedOutput()
 	if err != nil {
 		fmt.Printf("error: %s\n", err)
+	} else {
+		fmt.Println(string(res))
+		h.Add(t)
 	}
-	fmt.Println(string(res))
-
-	h.Add(t)
 }
 
 func (h *History) updateContext(newCtxs []string) {
