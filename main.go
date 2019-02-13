@@ -39,7 +39,7 @@ func (h *History) Add(command string) {
 }
 
 func (h *History) completer(d prompt.Document) []prompt.Suggest {
-	return prompt.FilterHasPrefix(h.suggests, d.GetWordBeforeCursor(), true)
+	return prompt.FilterFuzzy(h.suggests, d.GetWordBeforeCursor(), true)
 }
 
 func (h *History) executor(t string) {
