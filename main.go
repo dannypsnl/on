@@ -2,11 +2,18 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
+	"syscall"
+
+	"golang.org/x/crypto/ssh/terminal"
 
 	prompt "github.com/c-bata/go-prompt"
+	"github.com/kr/pty"
 )
 
 func main() {
@@ -60,13 +67,38 @@ func (h *History) executor(t string) {
 		return
 	}
 	cmd := exec.Command(h.contexts[0], append(h.contexts[1:], restCmd...)...)
-	res, err := cmd.CombinedOutput()
+	tty, err := pty.Start(cmd)
 	if err != nil {
 		fmt.Printf("error: %s\n", err)
-	} else {
-		fmt.Println(string(res))
-		h.Add(t)
+		return
 	}
+	defer tty.Close()
+
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGWINCH)
+	go func() {
+		for range ch {
+			if err := pty.InheritSize(os.Stdin, tty); err != nil {
+				log.Printf("error resizing pty: %s", err)
+			}
+		}
+	}()
+	ch <- syscall.SIGWINCH // Initial resize.
+
+	// Set stdin in raw mode.
+	oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		panic(err)
+	}
+	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
+	go func() { io.Copy(tty, os.Stdin) }()
+	io.Copy(os.Stdout, tty)
+
+	if err := cmd.Wait(); err != nil {
+		fmt.Printf("error: %s\n", err)
+		return
+	}
+	h.Add(t)
 }
 
 func (h *History) updateContext(newCtxs []string) {
