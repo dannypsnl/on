@@ -19,6 +19,7 @@ func main() {
 		suggests: make([]prompt.Suggest, 0),
 		contexts: os.Args[1:],
 	}
+	h.exist[""] = true
 	p := prompt.New(
 		h.executor,
 		h.completer,
