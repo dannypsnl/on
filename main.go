@@ -3,12 +3,9 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
-	"os/signal"
 	"strings"
-	"syscall"
 
 	"golang.org/x/crypto/ssh/terminal"
 
@@ -74,23 +71,14 @@ func (h *History) executor(t string) {
 	}
 	defer tty.Close()
 
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGWINCH)
-	go func() {
-		for range ch {
-			if err := pty.InheritSize(os.Stdin, tty); err != nil {
-				log.Printf("error resizing pty: %s", err)
-			}
-		}
-	}()
-	ch <- syscall.SIGWINCH // Initial resize.
-
 	// Set stdin in raw mode.
 	oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
-		panic(err)
+		fmt.Printf("failed at make raw stdin, error: %s\n", err)
+		os.Exit(1)
 	}
 	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
+
 	go func() { io.Copy(tty, os.Stdin) }()
 	io.Copy(os.Stdout, tty)
 
