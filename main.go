@@ -91,7 +91,11 @@ func (h *History) executor(t string) {
 }
 
 func (h *History) updateContext(newCtxs []string) {
-	h.contexts = append(h.contexts, newCtxs...)
+	for _, c := range newCtxs {
+		if c != "" {
+			h.contexts = append(h.contexts, c)
+		}
+	}
 }
 
 func prettyContext(ctxs []string) string {
