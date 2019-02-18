@@ -15,11 +15,12 @@ import (
 
 func main() {
 	h := History{
-		exist:    make(map[string]bool),
-		suggests: make([]prompt.Suggest, 0),
+		exist:    make(map[string]map[string]bool),
+		suggests: make(map[string][]prompt.Suggest),
 		contexts: os.Args[1:],
 	}
-	h.exist[""] = true
+	h.exist[h.curContext()] = make(map[string]bool)
+	h.exist[h.curContext()][""] = true
 	p := prompt.New(
 		h.executor,
 		h.completer,
@@ -35,8 +36,8 @@ func main() {
 }
 
 type History struct {
-	exist    map[string]bool
-	suggests []prompt.Suggest
+	exist    map[string]map[string]bool
+	suggests map[string][]prompt.Suggest
 	contexts []string
 
 	waitingNewContext bool
@@ -47,14 +48,17 @@ func (h *History) onControlA(*prompt.Buffer) {
 }
 
 func (h *History) Add(command string) {
-	if !h.exist[command] {
-		h.suggests = append(h.suggests, prompt.Suggest{Text: command})
+	if !h.exist[h.curContext()][command] {
+		h.suggests[h.curContext()] = append(h.suggests[h.curContext()], prompt.Suggest{Text: command})
 	}
-	h.exist[command] = true
+	if h.exist[h.curContext()] == nil {
+		h.exist[h.curContext()] = make(map[string]bool)
+	}
+	h.exist[h.curContext()][command] = true
 }
 
 func (h *History) completer(d prompt.Document) []prompt.Suggest {
-	return prompt.FilterFuzzy(h.suggests, d.GetWordBeforeCursor(), true)
+	return prompt.FilterFuzzy(h.suggests[h.curContext()], d.GetWordBeforeCursor(), true)
 }
 
 func (h *History) executor(t string) {
@@ -98,6 +102,10 @@ func (h *History) updateContext(newCtxs []string) {
 	}
 }
 
+func (h *History) curContext() string {
+	return prettyContext(h.contexts)
+}
+
 func prettyContext(ctxs []string) string {
 	var sb strings.Builder
 	for _, ctx := range ctxs {
@@ -109,5 +117,5 @@ func prettyContext(ctxs []string) string {
 }
 
 func (h *History) livePrefix() (string, bool) {
-	return fmt.Sprintf("on(%s)> ", prettyContext(h.contexts)), true
+	return fmt.Sprintf("on(%s)> ", h.curContext()), true
 }
