@@ -31,10 +31,18 @@ world-svc    ClusterIP   10.0.106.133   <none>        80/TCP    28h
 - `<C-a>`: control + A, type this then write done new contexts and `<Enter>`, you would see the context be apply on to old context
 
     For example:
-	```
-	on(kubectl)>
-	# <C-a>get<Enter>
-	on(kubectl get)>
-	```
+    ```
+    on(kubectl)>
+    # <C-a>get<Enter>
+    on(kubectl get)>
+    ```
+- `<C-c>`: control + C, type this would pop out the last element in command context
+
+    For example:
+    ```
+    on(kubectl get)>
+    # <C-c>
+    on(kubectl)>
+    ```
 
 At here you can see we avoid typing `kubectl` again and again
