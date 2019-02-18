@@ -26,10 +26,8 @@ func main() {
 		h.completer,
 		prompt.OptionLivePrefix(h.livePrefix),
 		prompt.OptionAddKeyBind(
-			prompt.KeyBind{
-				Key: prompt.ControlA,
-				Fn:  h.onControlA,
-			},
+			prompt.KeyBind{Key: prompt.ControlA, Fn: h.onControlA},
+			prompt.KeyBind{Key: prompt.ControlC, Fn: h.onControlC},
 		),
 	)
 	p.Run()
@@ -45,6 +43,12 @@ type History struct {
 
 func (h *History) onControlA(*prompt.Buffer) {
 	h.waitingNewContext = true
+}
+func (h *History) onControlC(*prompt.Buffer) {
+	if len(h.contexts) <= 0 {
+		return
+	}
+	h.contexts = h.contexts[:len(h.contexts)-1]
 }
 
 func (h *History) Add(command string) {
@@ -107,6 +111,9 @@ func (h *History) curContext() string {
 }
 
 func prettyContext(ctxs []string) string {
+	if len(ctxs) == 0 {
+		return ""
+	}
 	var sb strings.Builder
 	for _, ctx := range ctxs {
 		sb.WriteString(ctx)
