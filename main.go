@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
 
 	"golang.org/x/crypto/ssh/terminal"
@@ -88,8 +89,15 @@ func (h *History) executor(t string) {
 	}
 	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
 
-	go func() { io.Copy(tty, os.Stdin) }()
+	c := make(chan os.Signal, 1)
+	signal.Notify(c)
+	go func() {
+		for signalC := range c {
+			tty.WriteString(signalC.String())
+		}
+	}()
 	io.Copy(os.Stdout, tty)
+	signal.Stop(c)
 
 	if err := cmd.Wait(); err != nil {
 		fmt.Printf("error: %s\n", err)
