@@ -28,7 +28,7 @@ func main() {
 		prompt.OptionLivePrefix(h.livePrefix),
 		prompt.OptionAddKeyBind(
 			prompt.KeyBind{Key: prompt.ControlA, Fn: h.onControlA},
-			prompt.KeyBind{Key: prompt.ControlC, Fn: h.onControlC},
+			prompt.KeyBind{Key: prompt.ControlC, Fn: h.removeLastElementFromContext},
 		),
 	)
 	p.Run()
@@ -45,34 +45,24 @@ type History struct {
 func (h *History) onControlA(*prompt.Buffer) {
 	h.waitingNewContext = true
 }
-func (h *History) onControlC(*prompt.Buffer) {
-	if len(h.contexts) <= 0 {
-		return
+func (h *History) removeLastElementFromContext(*prompt.Buffer) {
+	if len(h.contexts) > 0 {
+		h.contexts = h.contexts[:len(h.contexts)-1]
 	}
-	h.contexts = h.contexts[:len(h.contexts)-1]
-}
-
-func (h *History) Add(command string) {
-	if !h.exist[h.curContext()][command] {
-		h.suggests[h.curContext()] = append(h.suggests[h.curContext()], prompt.Suggest{Text: command})
-	}
-	if h.exist[h.curContext()] == nil {
-		h.exist[h.curContext()] = make(map[string]bool)
-	}
-	h.exist[h.curContext()][command] = true
 }
 
 func (h *History) completer(d prompt.Document) []prompt.Suggest {
 	return prompt.FilterFuzzy(h.suggests[h.curContext()], d.GetWordBeforeCursor(), true)
 }
 
-func (h *History) executor(t string) {
-	restCmd := strings.Split(t, " ")
+func (h *History) executor(command string) {
+	restCmd := strings.Split(command, " ")
 	if h.waitingNewContext {
 		h.updateContext(restCmd)
 		h.waitingNewContext = false
 		return
 	}
+
 	cmd := exec.Command(h.contexts[0], append(h.contexts[1:], restCmd...)...)
 	tty, err := pty.Start(cmd)
 	if err != nil {
@@ -89,21 +79,32 @@ func (h *History) executor(t string) {
 	}
 	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c)
+	listenOnStdin := make(chan os.Signal, 1)
+	signal.Notify(listenOnStdin)
 	go func() {
-		for signalC := range c {
+		for signalC := range listenOnStdin {
 			tty.WriteString(signalC.String())
 		}
 	}()
 	io.Copy(os.Stdout, tty)
-	signal.Stop(c)
+	signal.Stop(listenOnStdin)
 
 	if err := cmd.Wait(); err != nil {
 		fmt.Printf("error: %s\n", err)
-		return
+	} else {
+		h.addCommandIntoSuggests(command)
 	}
-	h.Add(t)
+}
+
+func (h *History) addCommandIntoSuggests(command string) {
+	curCtx := h.curContext()
+	if h.exist[curCtx] == nil {
+		h.exist[curCtx] = make(map[string]bool)
+	}
+	if !h.exist[curCtx][command] {
+		h.suggests[curCtx] = append(h.suggests[curCtx], prompt.Suggest{Text: command})
+	}
+	h.exist[curCtx][command] = true
 }
 
 func (h *History) updateContext(newCtxs []string) {
@@ -112,10 +113,6 @@ func (h *History) updateContext(newCtxs []string) {
 			h.contexts = append(h.contexts, c)
 		}
 	}
-}
-
-func (h *History) curContext() string {
-	return prettyContext(h.contexts)
 }
 
 func prettyContext(ctxs []string) string {
@@ -133,4 +130,8 @@ func prettyContext(ctxs []string) string {
 
 func (h *History) livePrefix() (string, bool) {
 	return fmt.Sprintf("on(%s)> ", h.curContext()), true
+}
+
+func (h *History) curContext() string {
+	return prettyContext(h.contexts)
 }
