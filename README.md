@@ -26,3 +26,16 @@ This is a command line tool helps you avoid keep typing the same prefix when you
     ```
 
 At here you can see we avoid typing `kubectl` again and again
+
+### Completion
+
+Completion would find out all command, alias, and executable for command `on`
+
+To install the completion could use:
+
+```
+# for zsh
+$ make zsh-completion
+# or for bash
+$ make bash-completion
+```
