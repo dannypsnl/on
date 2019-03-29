@@ -2,15 +2,11 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"strings"
 
-	"golang.org/x/crypto/ssh/terminal"
-
 	prompt "github.com/c-bata/go-prompt"
-	"github.com/kr/pty"
 )
 
 func main() {
@@ -63,22 +59,10 @@ func (h *History) executor(command string) {
 	}
 
 	cmd := exec.Command(h.contexts[0], append(h.contexts[1:], restCmd...)...)
-	tty, err := pty.Start(cmd)
-	if err != nil {
-		fmt.Printf("error: %s\n", err)
-		return
-	}
-	defer tty.Close()
-
-	// Set stdin in raw mode.
-	oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		fmt.Printf("failed at make raw stdin, error: %s\n", err)
-		os.Exit(1)
-	}
-	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
-
-	io.Copy(os.Stdout, tty)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	cmd.Start()
 
 	if err := cmd.Wait(); err != nil {
 		fmt.Printf("error: %s\n", err)
