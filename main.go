@@ -62,7 +62,11 @@ func (h *History) executor(command string) {
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
-	cmd.Start()
+	err := cmd.Start()
+	if err != nil {
+		fmt.Printf("error: %s\n", err)
+		return
+	}
 
 	if err := cmd.Wait(); err != nil {
 		fmt.Printf("error: %s\n", err)
