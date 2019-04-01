@@ -57,8 +57,14 @@ func (h *History) executor(command string) {
 		h.waitingNewContext = false
 		return
 	}
+	cs := make([]string, 0)
+	for _, c := range restCmd {
+		if c != "" {
+			cs = append(cs, c)
+		}
+	}
 
-	cmd := exec.Command(h.contexts[0], append(h.contexts[1:], restCmd...)...)
+	cmd := exec.Command(h.contexts[0], append(h.contexts[1:], cs...)...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
@@ -71,7 +77,7 @@ func (h *History) executor(command string) {
 	if err := cmd.Wait(); err != nil {
 		fmt.Printf("error: %s\n", err)
 	} else {
-		h.addCommandIntoSuggests(command)
+		h.addCommandIntoSuggests(strings.Join(cs, " "))
 	}
 }
 
