@@ -6,6 +6,12 @@ This is a command line tool helps you avoid keep typing the same prefix when you
 
 [![asciicast](https://asciinema.org/a/5s6FVyl2WsU7UeM3BYrfK3gdu.svg)](https://asciinema.org/a/5s6FVyl2WsU7UeM3BYrfK3gdu)
 
+### Install
+
+```
+$ go get -u github.com/dannypsnl/on
+```
+
 ### Key Binds
 
 - `<C-a>`: control + A, type this then write done new contexts and `<Enter>`, you would see the context be apply on to old context
