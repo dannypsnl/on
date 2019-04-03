@@ -74,17 +74,13 @@ func (h *History) executor(command string) {
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
-	err := cmd.Start()
+	err := cmd.Run()
 	if err != nil {
 		fmt.Printf("error: %s\n", err)
 		return
 	}
 
-	if err := cmd.Wait(); err != nil {
-		fmt.Printf("error: %s\n", err)
-	} else {
-		h.addCommandIntoSuggests(suggestRestOfCommand)
-	}
+	h.addCommandIntoSuggests(suggestRestOfCommand)
 }
 
 func (h *History) addCommandIntoSuggests(command string) {
