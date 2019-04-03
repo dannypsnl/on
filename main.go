@@ -50,21 +50,27 @@ func (h *History) completer(d prompt.Document) []prompt.Suggest {
 	return prompt.FilterFuzzy(h.suggests[h.curContext()], d.GetWordBeforeCursor(), true)
 }
 
-func (h *History) executor(command string) {
-	restCmd := strings.Split(command, " ")
-	if h.waitingNewContext {
-		h.updateContext(restCmd)
-		h.waitingNewContext = false
-		return
-	}
+func (h *History) generateCommand(restCmd []string) (*exec.Cmd, string) {
 	cs := make([]string, 0)
+	// ensure we remove all empty string from the command
 	for _, c := range restCmd {
 		if c != "" {
 			cs = append(cs, c)
 		}
 	}
+	return exec.Command(h.contexts[0], append(h.contexts[1:], cs...)...),
+		strings.Join(cs, " ")
+}
 
-	cmd := exec.Command(h.contexts[0], append(h.contexts[1:], cs...)...)
+func (h *History) executor(command string) {
+	restOfCmd := strings.Split(command, " ")
+	if h.waitingNewContext {
+		h.updateContext(restOfCmd)
+		h.waitingNewContext = false
+		return
+	}
+
+	cmd, suggestRestOfCommand := h.generateCommand(restOfCmd)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
@@ -77,7 +83,7 @@ func (h *History) executor(command string) {
 	if err := cmd.Wait(); err != nil {
 		fmt.Printf("error: %s\n", err)
 	} else {
-		h.addCommandIntoSuggests(strings.Join(cs, " "))
+		h.addCommandIntoSuggests(suggestRestOfCommand)
 	}
 }
 
