@@ -50,16 +50,9 @@ func (h *History) completer(d prompt.Document) []prompt.Suggest {
 	return prompt.FilterFuzzy(h.suggests[h.curContext()], d.GetWordBeforeCursor(), true)
 }
 
-func (h *History) generateCommand(restCmd []string) (*exec.Cmd, string) {
-	cs := make([]string, 0)
-	// ensure we remove all empty string from the command
-	for _, c := range restCmd {
-		if c != "" {
-			cs = append(cs, c)
-		}
-	}
-	return exec.Command(h.contexts[0], append(h.contexts[1:], cs...)...),
-		strings.Join(cs, " ")
+func (h *History) generateCommand(restCmd string) *exec.Cmd {
+	cmdText := strings.Join(append(h.contexts, restCmd), " ")
+	return newCommand(cmdText)
 }
 
 func (h *History) executor(command string) {
@@ -70,7 +63,7 @@ func (h *History) executor(command string) {
 		return
 	}
 
-	cmd, suggestRestOfCommand := h.generateCommand(restOfCmd)
+	cmd := h.generateCommand(command)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
@@ -80,7 +73,27 @@ func (h *History) executor(command string) {
 		return
 	}
 
-	h.addCommandIntoSuggests(suggestRestOfCommand)
+	h.addCommandIntoSuggests(suggestCommand(command))
+}
+
+func suggestCommand(commandText string) string {
+	cs := make([]string, 0)
+	for _, e := range strings.Split(commandText, " ") {
+		if e != "" {
+			cs = append(cs, e)
+		}
+	}
+	return strings.Join(cs, " ")
+}
+
+func newCommand(commandText string) *exec.Cmd {
+	cmd := make([]string, 0)
+	for _, elem := range strings.Split(commandText, " ") {
+		if elem != "" {
+			cmd = append(cmd, elem)
+		}
+	}
+	return exec.Command(cmd[0], cmd[1:]...)
 }
 
 func (h *History) addCommandIntoSuggests(command string) {
@@ -102,23 +115,10 @@ func (h *History) updateContext(newCtxs []string) {
 	}
 }
 
-func prettyContext(ctxs []string) string {
-	if len(ctxs) == 0 {
-		return ""
-	}
-	var sb strings.Builder
-	for _, ctx := range ctxs {
-		sb.WriteString(ctx)
-		sb.WriteRune(' ')
-	}
-	s := sb.String()
-	return s[:len(s)-1]
-}
-
 func (h *History) livePrefix() (string, bool) {
 	return fmt.Sprintf("on(%s)> ", h.curContext()), true
 }
 
 func (h *History) curContext() string {
-	return prettyContext(h.contexts)
+	return strings.Join(h.contexts, " ")
 }
