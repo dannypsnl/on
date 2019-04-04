@@ -63,11 +63,13 @@ func (h *History) executor(command string) {
 		return
 	}
 
-	cmd := h.generateCommand(command)
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	cmd.Stdin = os.Stdin
-	err := cmd.Run()
+	pipeCmdText := strings.Split(command, "|")
+	pipeCmds := make([]*exec.Cmd, 0)
+	pipeCmds = append(pipeCmds, h.generateCommand(pipeCmdText[0]))
+	for _, pipeCmd := range pipeCmdText[1:] {
+		pipeCmds = append(pipeCmds, newCommand(pipeCmd))
+	}
+	err := runPipeline(pipeCmds...)
 	if err != nil {
 		fmt.Printf("error: %s\n", err)
 		return
@@ -84,6 +86,32 @@ func suggestCommand(commandText string) string {
 		}
 	}
 	return strings.Join(cs, " ")
+}
+
+func runPipeline(cmdPipe ...*exec.Cmd) error {
+	if len(cmdPipe) <= 0 {
+		return fmt.Errorf("no commands for pipeline")
+	}
+	if len(cmdPipe) == 1 {
+		onlyCmd := cmdPipe[0]
+		onlyCmd.Stderr = os.Stderr
+		onlyCmd.Stdout = os.Stdout
+		onlyCmd.Stdin = os.Stdin
+		return onlyCmd.Run()
+	}
+	prevCmd := cmdPipe[0]
+	for _, curCmd := range cmdPipe[1:] {
+		curCmd.Stdin, _ = prevCmd.StdoutPipe()
+		err := prevCmd.Start()
+		if err != nil {
+			return err
+		}
+		prevCmd = curCmd
+	}
+	lastCmd := cmdPipe[len(cmdPipe)-1]
+	lastCmd.Stdout = os.Stdout
+	lastCmd.Stderr = os.Stderr
+	return lastCmd.Run()
 }
 
 func newCommand(commandText string) *exec.Cmd {
