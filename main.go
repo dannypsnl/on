@@ -56,9 +56,8 @@ func (h *History) generateCommand(restCmd string) *exec.Cmd {
 }
 
 func (h *History) executor(command string) {
-	restOfCmd := strings.Split(command, " ")
 	if h.waitingNewContext {
-		h.updateContext(restOfCmd)
+		h.updateContext(command)
 		h.waitingNewContext = false
 		return
 	}
@@ -135,7 +134,8 @@ func (h *History) addCommandIntoSuggests(command string) {
 	h.exist[curCtx][command] = true
 }
 
-func (h *History) updateContext(newCtxs []string) {
+func (h *History) updateContext(command string) {
+	newCtxs := strings.Split(command, " ")
 	for _, c := range newCtxs {
 		if c != "" {
 			h.contexts = append(h.contexts, c)
