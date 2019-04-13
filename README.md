@@ -4,7 +4,7 @@ This is a command line tool helps you avoid keep typing the same prefix when you
 
 ### Demo:
 
-[![asciicast](https://asciinema.org/a/5s6FVyl2WsU7UeM3BYrfK3gdu.svg)](https://asciinema.org/a/5s6FVyl2WsU7UeM3BYrfK3gdu)
+[![asciicast](https://asciinema.org/a/240649.svg)](https://asciinema.org/a/240649)
 
 ### Install
 
