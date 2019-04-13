@@ -50,11 +50,6 @@ func (h *History) completer(d prompt.Document) []prompt.Suggest {
 	return prompt.FilterFuzzy(h.suggests[h.curContext()], d.GetWordBeforeCursor(), true)
 }
 
-func (h *History) generateCommand(restCmd string) *exec.Cmd {
-	cmdText := strings.Join(append(h.contexts, restCmd), " ")
-	return newCommand(cmdText)
-}
-
 func (h *History) executor(command string) {
 	if h.waitingNewContext {
 		h.updateContext(command)
@@ -62,19 +57,23 @@ func (h *History) executor(command string) {
 		return
 	}
 
-	pipeCmdText := strings.Split(command, "|")
-	pipeCmds := make([]*exec.Cmd, 0)
-	pipeCmds = append(pipeCmds, h.generateCommand(pipeCmdText[0]))
-	for _, pipeCmd := range pipeCmdText[1:] {
-		pipeCmds = append(pipeCmds, newCommand(pipeCmd))
-	}
-	err := runPipeline(pipeCmds...)
+	fullCommand := strings.Join(append(h.contexts, command), " ")
+	err := runPipeline(cutCommand(fullCommand)...)
 	if err != nil {
 		fmt.Printf("error: %s\n", err)
 		return
 	}
 
 	h.addCommandIntoSuggests(suggestCommand(command))
+}
+
+func cutCommand(command string) []*exec.Cmd {
+	pipeCmdText := strings.Split(command, "|")
+	pipeCmds := make([]*exec.Cmd, 0)
+	for _, pipeCmd := range pipeCmdText {
+		pipeCmds = append(pipeCmds, newCommand(pipeCmd))
+	}
+	return pipeCmds
 }
 
 func suggestCommand(commandText string) string {
