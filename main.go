@@ -45,7 +45,11 @@ func (h *History) removeLastElementFromContext(*prompt.Buffer) {
 }
 
 func (h *History) completer(d prompt.Document) []prompt.Suggest {
-	return prompt.FilterFuzzy(h.suggests[h.curContext()], d.GetWordBeforeCursor(), true)
+	return prompt.FilterFuzzy(h.getSuggests(), d.GetWordBeforeCursor(), true)
+}
+
+func (h *History) getSuggests() []prompt.Suggest {
+	return h.suggests[h.curContext()]
 }
 
 func (h *History) executor(command string) {
