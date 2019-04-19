@@ -16,7 +16,6 @@ func main() {
 		contexts: os.Args[1:],
 	}
 	h.exist[h.curContext()] = make(map[string]bool)
-	h.exist[h.curContext()][""] = true
 	p := prompt.New(
 		h.executor,
 		h.completer,
@@ -123,6 +122,9 @@ func newCommand(commandText string) *exec.Cmd {
 }
 
 func (h *History) addCommandIntoSuggests(command string) {
+	if command == "" {
+		return
+	}
 	curCtx := h.curContext()
 	if h.exist[curCtx] == nil {
 		h.exist[curCtx] = make(map[string]bool)
