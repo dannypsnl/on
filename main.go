@@ -15,7 +15,6 @@ func main() {
 		suggests: make(map[string][]prompt.Suggest),
 		contexts: os.Args[1:],
 	}
-	h.exist[h.curContext()] = make(map[string]bool)
 	p := prompt.New(
 		h.executor,
 		h.completer,
