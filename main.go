@@ -14,8 +14,12 @@ func main() {
 		h.completer,
 		prompt.OptionLivePrefix(h.livePrefix),
 		prompt.OptionAddKeyBind(
-			prompt.KeyBind{Key: prompt.ControlA, Fn: h.onControlA},
-			prompt.KeyBind{Key: prompt.ControlC, Fn: h.removeLastElementFromContext},
+			prompt.KeyBind{Key: prompt.ControlA, Fn: func(*prompt.Buffer) {
+				h.startWaitingAppendingContext()
+			}},
+			prompt.KeyBind{Key: prompt.ControlC, Fn: func(*prompt.Buffer) {
+				h.removeLastElementFromContext()
+			}},
 		),
 	)
 	p.Run()

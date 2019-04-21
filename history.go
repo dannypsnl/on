@@ -24,10 +24,11 @@ type History struct {
 	waitingNewContext bool
 }
 
-func (h *History) onControlA(*prompt.Buffer) {
+func (h *History) startWaitingAppendingContext() {
 	h.waitingNewContext = true
 }
-func (h *History) removeLastElementFromContext(*prompt.Buffer) {
+
+func (h *History) removeLastElementFromContext() {
 	if len(h.contexts) > 0 {
 		h.contexts = h.contexts[:len(h.contexts)-1]
 	}
