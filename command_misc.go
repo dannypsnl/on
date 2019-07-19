@@ -11,26 +11,21 @@ func runPipeline(cmdPipe ...*exec.Cmd) error {
 	if len(cmdPipe) <= 0 {
 		return fmt.Errorf("no commands for pipeline")
 	}
-	if len(cmdPipe) == 1 {
-		onlyCmd := cmdPipe[0]
-		onlyCmd.Stderr = os.Stderr
-		onlyCmd.Stdout = os.Stdout
-		onlyCmd.Stdin = os.Stdin
-		return onlyCmd.Run()
-	}
-	prevCmd := cmdPipe[0]
-	for _, curCmd := range cmdPipe[1:] {
-		curCmd.Stdin, _ = prevCmd.StdoutPipe()
-		err := prevCmd.Start()
-		if err != nil {
-			return err
+	command := cmdPipe[0]
+	if len(cmdPipe) > 1 {
+		for _, curCmd := range cmdPipe[1:] {
+			curCmd.Stdin, _ = command.StdoutPipe()
+			err := command.Start()
+			if err != nil {
+				return err
+			}
+			command = curCmd
 		}
-		prevCmd = curCmd
 	}
-	lastCmd := cmdPipe[len(cmdPipe)-1]
-	lastCmd.Stdout = os.Stdout
-	lastCmd.Stderr = os.Stderr
-	return lastCmd.Run()
+	command = cmdPipe[len(cmdPipe)-1]
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+	return command.Run()
 }
 
 func newCommand(commandText string) *exec.Cmd {
